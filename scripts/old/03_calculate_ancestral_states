@@ -1,0 +1,128 @@
+#!/usr/bin/python
+
+from ete2 import *
+from optparse import OptionParser
+import os
+import re
+import glob
+from rpy2.robjects.packages import importr
+from rpy2 import robjects
+# Rpy related import of package ape
+ape = importr("ape")
+#=============================================================================
+#Command line options=========================================================
+#=============================================================================
+
+usage = 'usage: %prog [options]'
+desc="""%prog takes a species tree and a gene tree and reconcililates it"""
+        
+cloptions = OptionParser(usage = usage, description=desc)
+cloptions.add_option('-g', '--genetree', dest = 'genetree',
+    help = 'Required newick gene tree', metavar='FILE',
+    default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/playground')
+cloptions.add_option('-s', '--speciestree', dest = 'speciestree',
+    help = 'Required newick species tree".=1"', metavar='FILE')
+  #  default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/hlh.tree')
+    
+(options, args) = cloptions.parse_args()
+
+#=============================================================================
+#Methods======================================================================
+#=============================================================================
+
+def get_species_name(node_name_string):
+    spcode = node_name_string[:5]
+    return spcode
+
+def mylayout(node):
+    layouts.phylogeny(node)
+
+# Use ape package multi2di to convert all multifurcating trees into bi-
+#furcating ones.
+def multifur_to_difur(tree):
+    tree = PhyloTree(tree)
+    tree = ape.read_tree(text = tree.write())
+    tree = ape.multi2di(tree, random="TRUE")
+    tree = ape.write_tree(tree)[0]
+    tree = PhyloTree(tree)
+    return tree
+
+def short_node_name(tree):
+    for node in tree.traverse():
+        if node.is_leaf():
+            node.name = node.name[0:5]
+    return tree
+
+def crop_species_tree(stree, gtree):
+    species = []
+    for node in gtree.traverse():
+        if node.is_leaf():
+            species.append(node.species)
+    all_species = tuple(set(species))
+    if len(all_species) >= 2:
+        ancestor = stree.get_common_ancestor(*all_species)
+        return ancestor
+    else:
+        return None
+
+def ancestral_counter(node):
+    loss = 0
+    if not node.is_leaf():
+        if node.evoltype == "S":
+            return node.name, 1
+        elif node.evoltype == "L":
+            for desc in node.get_descendants():
+                if not desc.is_leaf() and desc.evoltype == "L":
+                    loss+=1
+                elif desc.is_leaf() and desc.name == desc.species:
+                    loss+=1
+            if loss != len(node.get_descendants()):
+                return node.name, 1
+        else:
+            pass
+
+#=============================================================================
+#Main=========================================================================
+#=============================================================================
+#Locate all tree files in the given directory
+tree_files = []
+path = options.genetree
+for infile in glob.glob( os.path.join(path, '*.tree') ):
+    tree_files.append(infile)
+#=============================================================================
+#Define species tree, shorten leaf names and add species name
+stree = PhyloTree(options.speciestree, format=8)
+stree = short_node_name(stree)
+stree.set_species_naming_function(get_species_name)
+#=============================================================================
+#Initialise ancestral count dictionary, in form: internal node name => count
+#default count is 0
+ancestral_count = {}
+for node in stree.traverse():
+    if not node.is_leaf():
+        ancestral_count.setdefault(node.name,0)
+#=============================================================================
+#Iterate over every gene tree in a given directory:
+for gene_tree in tree_files:
+    
+    gtree = multifur_to_difur(gene_tree)  
+    gtree.set_species_naming_function(get_species_name)
+    cropped_stree = crop_species_tree(stree, gtree)
+
+    if len(gtree) > 2 and cropped_stree != None:
+        r_tree, events = gtree.reconcile(cropped_stree)
+        
+        #Counting loss events only of descendants not all losses!
+        for node in r_tree.traverse():
+            a_counts = ancestral_counter(node)
+            if a_counts != None:
+                ancestral_count[a_counts[0]] += a_counts[1]
+    for key, value in ancestral_count.items():
+        print value
+    r_tree.show(mylayout)
+#=============================================================================                      
+##Just printing stuff..
+
+
+#r_tree.show(mylayout)
+
