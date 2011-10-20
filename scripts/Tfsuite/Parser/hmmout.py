@@ -4,7 +4,7 @@
 #       hmmout.py
 
 
-from Tfsuite.Classes.proteine import Proteine
+from Tfsuite.Classes.protein import Protein
 
 class Hmmout:
 	
@@ -31,6 +31,6 @@ class Hmmout:
 			if self.proteins.has_key(gene_name):
 				self.proteins[gene_name].domains.append(domain)
 			else:
-				self.proteins[gene_name] = Proteine(gene_name)
+				self.proteins[gene_name] = Protein(gene_name)
 				self.proteins[gene_name].domains.append(domain)
 	

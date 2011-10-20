@@ -4,27 +4,7 @@ from optparse import OptionParser
 import os
 import glob
 import sys
-#=============================================================================
-#Command line options=========================================================
-#=============================================================================
 
-usage = 'usage: %prog [options]'
-desc="""%prog takes domain arrangment as subfamilies and maps them to sequences and species"""
-        
-cloptions = OptionParser(usage = usage, description=desc)
-cloptions.add_option('-f', '--arrangment2family', dest = 'arrangment2family',
-    help = 'Required arrangement to family mapping', metavar='FILE',
-    default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/data/input/arrangement2family')
-cloptions.add_option('-m', '--hmmout', dest = 'hmmout',
-    help = 'Required hmmout file', metavar='FILE',
-    default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/data/input/TF.sequences.28092010.hmmout')
-cloptions.add_option('-s', '--sequences', dest = 'sequences',
-    help = 'Required fasta file containing all sequences', metavar='FILE',
-    default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/data/input/TF.sequences.28092010.fasta')
-cloptions.add_option('-o', '--organisms', dest = 'organisms',
-    help = 'Required mapping from sequence names to species', metavar='FILE',
-    default = '/home/fabian/Dropbox/uni/Master/FM_1_TF/data/input/speciesMapping')    
-(options, args) = cloptions.parse_args()
 
 #=============================================================================
 

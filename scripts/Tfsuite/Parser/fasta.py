@@ -1,20 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#       fasta.py
+
 
 class Fasta:
-
 	def __init__(self):
 		self.seqs = {}
 
 	def __iter__(self):
 		#We are an iterable, so return our iterator
-		return self.forward()
-
-	def forward(self):
-		#The forward generator
-		current_item = 0
-		while (current_item < len(self.seqs)):
-			current_item += 1
-			yield self.seqs
+		for i in self.seqs:
+			yield i, self.seqs[i]
 
 	def load(self,file):
 		lines = open(file, "r").readlines()
