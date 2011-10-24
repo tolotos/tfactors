@@ -4,10 +4,13 @@
 #
 #       orthomcl.py
    
-   
-   
 
-   def load_cafe(self,cafe_file):
+class Cafe:
+
+	def create_input(clusters):
+		
+
+   def load(self,cafe_file):
         cafe_dic = {}
         cafe_file = open(cafe_file, "r").readlines()
         for line in cafe_file:
