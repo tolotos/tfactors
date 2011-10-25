@@ -1,63 +1,83 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #  orthomcl_to_cafe.py
-
-#=======================================================================
+#
+#==============================================================================
 from optparse import OptionParser
 from Tfsuite.Parser.orthomcl import Orthomcl
+from Tfsuite.Parser.hmmout import Hmmout
+from Tfsuite.Parser.fasta import Fasta
+from Tfsuite.Parser.species import SpeciesMapping
 import os
-#=======================================================================
-#Command line options===================================================
-#=======================================================================
+import sys
+import glob
+#==============================================================================
+#Command line options==========================================================
+#==============================================================================
 usage = 'usage: %prog [options]'
-desc="""%prog takes orthomcl output (clusters) and produces an input
-		input file for the tool cafe"""
-        
+desc='''%prog takes orthomcl output (clusters) and produces an input
+        input file for the tool cafe'''
 cloptions = OptionParser(usage = usage, description=desc)
-cloptions.add_option('-o', '--orthomcl', dest = 'file',
+cloptions.add_option('-o', '--orthomcl', dest = 'clusters',
     help = 'Orthomcl clusters', metavar='FILE',
     default = '')
+cloptions.add_option('-f', '--fasta', dest = 'fasta',
+    help = 'Fasta file containing sequences of Proteins', metavar='FILE',
+    default = '')
+cloptions.add_option('-s', '--species', dest = 'species',
+    help = 'Protein to species mapping', metavar='FILE',
+    default = '')
+cloptions.add_option('-d', '--hmmout', dest = 'hmmout',
+    help = 'Hmmout, containing domain annotated proteins', metavar='FILE',
+    default = '')
 (options, args) = cloptions.parse_args()
-#=======================================================================
+#==============================================================================
 
-def prot_to_spec(proteome):
-    spec_dic = {}
-    
-    for name, protein in proteome.proteins.items():
-        if spec_dic.has_key(protein.species):
-            if spec_dic[protein.species].families.has_key(protein.family):
-                spec_dic[protein.species].families[protein.family] +=1
-        else:
-            spec_dic[protein.species] = Species(protein.species)
-            spec_dic[protein.species].import_families(proteome)
-    return spec_dic
-#============================================================================
+def create_clusters(f_orthomcl,f_hmmout,f_fasta,f_species):
+    ''' Loads an orthomcl output file, to create clusters. In addition proteins
+        are added from the corresponding hmmout file, species information is
+        added from speciesMapping(Andreas) and fasta sequences for each protein
+        are loaded. Function returns an interable with cluster objects'''
+    orthomcl, hmmout, fasta, species = Orthomcl(), Hmmout(), Fasta(), SpeciesMapping()
+    fasta.load(f_fasta)
+    hmmout.load(f_hmmout)
+    orthomcl.load(f_orthomcl)
+    species.load(f_species)
+    for protein in hmmout:
+        protein.add_sequence(fasta)
+        protein.add_cluster(orthomcl)
+        protein.add_species(species)
+    for cluster in orthomcl:
+        cluster.add_proteins(hmmout)
+        cluster.counts = species.all()
+        cluster.add_counts()
+    return orthomcl
 
-#sys.stdout.write("FAMILYDESC"+"\t"+"FAMILY")
-#for name, species in test.items():
-#    sys.stdout.write("\t"+species.name)
+def write_cafe(orthomcl,species):
+    '''Writes a cafe input file. Species is a list, which contains all
+       the species that should be included. Cafe needs this exact layout,
+       therefore the \t and \n charcters are flushed directly.'''
+    sys.stdout.write("FAMILYDESC"+"\t"+"FAMILY")
+    for name in species:
+        sys.stdout.write("\t"+name)
+    for cluster in orthomcl:
+        sys.stdout.write("\n"+"---"+"\t"+str(cluster.name))
+        for name in species:
+            sys.stdout.write("\t"+str(cluster.counts[name]))
 
-#counts = []
-#for name, species in test.items():
-#    counts.append((zip(*species.families.items())[1]))
-#    names = species.families.keys()
-
-#counter = 0
-#counts = zip(*counts)
-#for name in names:
-#    sys.stdout.write("\n"+"---"+"\t"+str(name))
-#    for i in counts[counter]:
-#        sys.stdout.write("\t"+str(i))
-#    counter +=1
-
+#==============================================================================
 
 
 def main():
-	orthomcl = Orthomcl()
-	orthomcl.load(options.file)
-	for i in orthomcl:
-		print i.members
+    clusters = create_clusters(options.clusters,
+                               options.hmmout,
+                               options.fasta,
+                               options.species)
+    write_cafe(clusters,["homsa"])
+
+
 
 if __name__ == '__main__':
-	main()
+    main()
+

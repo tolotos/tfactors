@@ -14,25 +14,32 @@ class Cluster:
         self.branch_p = None
         self.ancestral_counts = {}
         self.species_tree = None
-    
+
+
+    def add_proteins(self, proteins):
+        for protein in proteins:
+            if protein.gene_name in self.members:
+                self.members.append(protein)
+                self.members.remove(protein.gene_name)
+
     def add_family(self):
         self.family = self.members[0].family
 
     def add_cluster_to_members(self):
             for protein in self.members:
                 protein.cluster = self
-                
+
     def create_counts_dic(self,proteome):
         self.counts = copy.deepcopy(proteome.species_dic)
 
     def add_counts(self):
         for protein in self.members:
             self.counts[protein.species] += 1
-    
+
     def add_ancestral_dic(self):
         for node in self.species_tree.traverse():
             self.ancestral_counts[node.name] = 0
-    
+
     def parse_ancestral_counts(self):
         self.tree = Tree(self.tree+";",format=8)
         for node in self.tree.traverse("postorder"):
@@ -54,10 +61,10 @@ class Cluster:
                     for species_node in self.species_tree.traverse():
                         if species_node.name == node.name:
                             species_node.count = count
-            
+
     def add_tree(self,tree):
         self.species_tree = copy.deepcopy(tree)
-    
+
     def map_branch_p(self,p_value):
         if self.p_value <= float(p_value):
             branch_list = eval(self.branch_p)
@@ -68,7 +75,7 @@ class Cluster:
                     tmp.append(item[1])
             branch_list = tmp
             counter = 0
-            for item in branch_list:                        
+            for item in branch_list:
                 if float(item) <= float(p_value):
                     for node in self.species_tree.traverse():
                         if node.position == counter:
@@ -81,9 +88,9 @@ class Cluster:
 
 
 def main():
-	
-	return 0
+
+    return 0
 
 if __name__ == '__main__':
-	main()
+    main()
 
