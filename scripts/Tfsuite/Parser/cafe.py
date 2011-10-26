@@ -10,7 +10,9 @@ class Cafe:
 
     def __init__(self):
         self.name = ""
-
+        self.clusters = {}
+    
+    
     def write(self,orthomcl,species):
         '''Writes a cafe input file. Species is a list, which contains all
            the species that should be included. Cafe needs this exact layout,
@@ -24,13 +26,12 @@ class Cafe:
                 sys.stdout.write("\t"+str(cluster.counts[name]))
 
     def load(self,cafe_file):
-        cafe_dic = {}
         cafe_file = open(cafe_file, "r").readlines()
         for line in cafe_file:
-            if line[0] == "O":
+            if line.startswith("O"):
                 line = line.rstrip().split()
                 #print line[3]#,line[2],line[3]
-                cafe_dic[line[0]] = [line[1],line[2],line[3]]
+                self.clusters[line[0]] = [line[1],line[2],line[3]]
         for name, cluster in self.clusters.items():
             cluster.tree = cafe_dic[cluster.name][0]
             cluster.p_value = float(cafe_dic[cluster.name][1])
