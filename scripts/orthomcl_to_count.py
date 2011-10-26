@@ -9,7 +9,7 @@ from Tfsuite.Parser.orthomcl import Orthomcl
 from Tfsuite.Parser.hmmout import Hmmout
 from Tfsuite.Parser.fasta import Fasta
 from Tfsuite.Parser.species import SpeciesMapping
-from Tfsuite.Parser.cafe import Cafe
+from Tfsuite.Parser.count import Count
 import os
 import glob
 import copy
@@ -60,14 +60,16 @@ def species_list(f_species):
     return list(species.all())
 #==============================================================================
 def main():
-    cafe = Cafe()
+    count = Count()
     clusters = create_clusters(options.clusters,
                                options.hmmout,
                                options.fasta,
                                options.species)
     species = species_list(options.species)
-    cafe.write(clusters,species)
+    count.write(clusters,species)
 
 if __name__ == '__main__':
     main()
+
+
 

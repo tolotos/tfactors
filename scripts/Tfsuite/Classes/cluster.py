@@ -16,11 +16,14 @@ class Cluster:
         self.species_tree = None
 
 
-    def add_proteins(self, proteins):
-        for protein in proteins:
-            if protein.gene_name in self.members:
-                self.members.append(protein)
-                self.members.remove(protein.gene_name)
+    def add_proteins(self, hmmout):
+        '''Adds protein objects from hmmout to a cluster, members at first are
+           stored as strings "gene_name" from orthomcl input and then are
+           replaced by protein objects provided by the hmmout input file'''
+        tmp_objects = []
+        for i in self.members:
+            tmp_objects.append(hmmout.proteins[i])
+        self.members = tmp_objects
 
     def add_family(self):
         self.family = self.members[0].family

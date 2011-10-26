@@ -34,6 +34,9 @@ class Protein:
             self.seq = fasta.seqs[self.gene_name]
 
     def add_cluster(self,clusters):
+        '''Adds the id of the to a protein. This is slow, if not necessary use
+           "add_cluster_to_members" function for each cluster, which is much
+           faster.'''
         for cluster in clusters:
             if self.gene_name in cluster.members:
                 self.cluster = cluster.name

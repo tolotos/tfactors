@@ -9,6 +9,7 @@ class SpeciesMapping:
 
     def __init__(self):
         self.specmap = {}
+        self.zero_spec_count = {}
 
     def __iter__(self):
     #We are an iterable, so return our iterator
@@ -21,10 +22,9 @@ class SpeciesMapping:
             line = line.rstrip().split()
             name = line[0].replace(":","_")
             self.specmap[name] = line[1]
+        for i in self.specmap:
+            if self.zero_spec_count.has_key(self.specmap[i]) == False:
+                self.zero_spec_count[self.specmap[i]] = 0
 
     def all(self):
-        species = {}
-        for i in self.specmap:
-            if species.has_key(self.specmap[i]) == False:
-                species[self.specmap[i]] = 0
-        return species
+        return self.zero_spec_count

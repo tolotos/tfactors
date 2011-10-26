@@ -1,16 +1,29 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #       orthomcl.py
-   
+
+import glob
+import sys
 
 class Cafe:
 
-	def create_input(clusters):
-		
+    def __init__(self):
+        self.name = ""
 
-   def load(self,cafe_file):
+    def write(self,orthomcl,species):
+        '''Writes a cafe input file. Species is a list, which contains all
+           the species that should be included. Cafe needs this exact layout,
+           therefore the \t and \n charcters are flushed directly.'''
+        sys.stdout.write("FAMILYDESC"+"\t"+"FAMILY")
+        for name in species:
+            sys.stdout.write("\t"+name)
+        for cluster in orthomcl:
+            sys.stdout.write("\n"+"---"+"\t"+str(cluster.name))
+            for name in species:
+                sys.stdout.write("\t"+str(cluster.counts[name]))
+
+    def load(self,cafe_file):
         cafe_dic = {}
         cafe_file = open(cafe_file, "r").readlines()
         for line in cafe_file:
@@ -22,7 +35,7 @@ class Cafe:
             cluster.tree = cafe_dic[cluster.name][0]
             cluster.p_value = float(cafe_dic[cluster.name][1])
             cluster.branch_p = cafe_dic[cluster.name][2]
-    
+
     def map_cafe_tree(self, cafe_file):
         cafe_file = open(cafe_file, "r").readlines()
         for line in cafe_file:
@@ -63,6 +76,6 @@ class Cafe:
                                 node.position = counter
                                 counter += 1
                             elif int(node.ident) == int(item[1]):
-                                node.position = counter                                
+                                node.position = counter
                                 counter += 1
         return self.tree
