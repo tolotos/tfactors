@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 #
 #       correlate_cafe_count.py
@@ -58,9 +58,26 @@ def add_cafe_and_count_to_nodes(tree):
         node.add_features(count=None,cafe=None)
     return tree
 
-def map_cafe_to_tree(cafe, tree):
-    
-    return 0
+def map_cafe_to_tree(clusters, cafe, tree):
+    for cluster in clusters:
+        c_counts = {}
+        cafe_tree = cafe.clusters[cluster.name][0]
+        cafe_tree = Tree(cafe_tree+";",format=1)
+        cafe_tree = add_num_to_nodes(cafe_tree)
+        for node in cafe_tree.traverse("postorder"):
+            if node.is_leaf():
+                a = node.name.split("_")
+                c_counts[a[0]] = a[1]
+            else:
+                a = node.name[1:]
+                c_counts[node.num] = a
+        for node in cluster.tree.traverse("postorder"):
+            if node.is_leaf():
+                node.cafe = c_counts[node.name]
+            else:
+                node.cafe = c_counts[node.num]
+    return clusters
+
 def map_count_to_tree(clusters,count,tree):
     for cluster in clusters:
         counts = count.clusters[cluster.name]
@@ -75,27 +92,29 @@ def map_count_to_tree(clusters,count,tree):
 
 
 def get_lineage(node):
-    counts= []
+    count= []
+    cafe = []
     while node:
-        counts.append(node.count)
+        count.append(int(node.count))
+        cafe.append(int(node.cafe))
         node = node.up
-    return counts
+    return count, cafe
 
 
 def main():
     clusters = pickle.load(open(options.pickle,"r"))
     cafe, count = Cafe(),Count()
-    #cafe.load(options.cafe_in)
+    cafe.load(options.cafe_in)
     count.load(options.count_in)
-    
     tree = Tree(options.tree, format=1)
     add_num_to_nodes(tree)
     add_cafe_and_count_to_nodes(tree)
     clusters = map_count_to_tree(clusters,count,tree)
-
-    for node in clusters.clusters["ORTHOMCL10"].tree.traverse("postorder"):
+    clusters = map_cafe_to_tree(clusters,cafe,tree)
+    for node in clusters.clusters["ORTHOMCL0"].tree.traverse("postorder"):
         if node.is_leaf():
-            print node.name, get_lineage(node)
+            lineage = get_lineage(node)
+            print node.name, get_lineage(node), cor(lineage[0],lineage[1], "pearson")
 
 
 

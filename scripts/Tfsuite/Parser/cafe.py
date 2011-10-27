@@ -5,14 +5,20 @@
 
 import glob
 import sys
+from ete2 import Tree
 
 class Cafe:
 
     def __init__(self):
         self.name = ""
         self.clusters = {}
-    
-    
+
+    def __iter__(self):
+        #We are an iterable, so return our iterator
+        for i in self.clusters:
+            yield i, self.clusters[i]
+
+
     def write(self,orthomcl,species):
         '''Writes a cafe input file. Species is a list, which contains all
            the species that should be included. Cafe needs this exact layout,
@@ -30,12 +36,15 @@ class Cafe:
         for line in cafe_file:
             if line.startswith("O"):
                 line = line.rstrip().split()
-                #print line[3]#,line[2],line[3]
                 self.clusters[line[0]] = [line[1],line[2],line[3]]
-        for name, cluster in self.clusters.items():
-            cluster.tree = cafe_dic[cluster.name][0]
-            cluster.p_value = float(cafe_dic[cluster.name][1])
-            cluster.branch_p = cafe_dic[cluster.name][2]
+
+        #for name, cluster in self.clusters.items():
+            #cluster.tree = cafe_dic[cluster.name][0]
+            #cluster.p_value = float(cafe_dic[cluster.name][1])
+            #cluster.branch_p = cafe_dic[cluster.name][2]
+
+
+
 
     def map_cafe_tree(self, cafe_file):
         cafe_file = open(cafe_file, "r").readlines()
