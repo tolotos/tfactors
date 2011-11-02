@@ -59,6 +59,12 @@ def add_cafe_and_count_to_nodes(tree):
     return tree
 
 def map_cafe_to_tree(clusters, cafe, tree):
+    '''Takes the tree objects and family p-value for each cluster provided
+       by the cafe parser and maps the reconstructed counts to the nodes of
+       a tree for each cluster. Some postprocessing, like parsing the tree
+       object is done in here, which should be moved into the parser at some
+       point. This should result in a similar small function as
+       map_count_to_tree provides.'''
     for cluster in clusters:
         c_counts = {}
         cafe_tree = cafe.clusters[cluster.name][0]
@@ -79,6 +85,8 @@ def map_cafe_to_tree(clusters, cafe, tree):
     return clusters
 
 def map_count_to_tree(clusters,count,tree):
+    '''Takes the parsed count ouput provided and maps it onto the nodes
+       of the tree for each cluster (node.count).'''
     for cluster in clusters:
         counts = count.clusters[cluster.name]
         #print name, counts
@@ -90,8 +98,10 @@ def map_count_to_tree(clusters,count,tree):
                 node.count = counts[node.num]
     return clusters
 
-
 def get_lineage(node):
+    '''Walks back from node to root and returns two lists, where each list
+       contains the reconstructed states by cafe or count respectivly. These
+       two lists can be used by the cor function to correlate the results.'''
     count= []
     cafe = []
     while node:
@@ -100,9 +110,11 @@ def get_lineage(node):
         node = node.up
     return count, cafe
 
-
-def main():
-    clusters = pickle.load(open(options.pickle,"r"))
+def load_clusters(clusters):
+    '''Loads clusters from pickled objects.
+       The count and cafe results are added to the pickled clusters and
+       can then be processed further. (Analysis, new pickling.)'''
+    clusters = pickle.load(open(clusters,"r"))
     cafe, count = Cafe(),Count()
     cafe.load(options.cafe_in)
     count.load(options.count_in)
@@ -111,11 +123,23 @@ def main():
     add_cafe_and_count_to_nodes(tree)
     clusters = map_count_to_tree(clusters,count,tree)
     clusters = map_cafe_to_tree(clusters,cafe,tree)
-    for node in clusters.clusters["ORTHOMCL0"].tree.traverse("postorder"):
-        if node.is_leaf():
-            lineage = get_lineage(node)
-            print node.name, get_lineage(node), cor(lineage[0],lineage[1], "pearson")
+    return clusters
 
+def main():
+    clusters = load_clusters(options.pickle)
+    for cluster in clusters:
+        print cluster.name
+        print "species count cafe corellation"
+        for node in cluster.tree.traverse("postorder"):
+            node.add_features(lineage=None,cor=None)
+            if node.is_leaf():
+                node.lineage = get_lineage(node)
+                if rpy.r.sd(node.lineage[0]) == 0 or rpy.r.sd(node.lineage[1]) == 0:
+                    node.cor = "STDEV ZERO"
+                    print node.name, node.lineage[0], node.lineage[1], node.cor
+                else:
+                    node.cor = cor(node.lineage[0],node.lineage[1], "pearson")
+                    print node.name, node.lineage[0],node.lineage[1], node.cor
 
 
 if __name__ == '__main__':

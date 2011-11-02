@@ -14,6 +14,7 @@ class Cluster:
         self.branch_p = None
         self.ancestral_counts = {}
         self.species_tree = None
+        #self.cor = None
 
 
     def add_proteins(self, hmmout):
