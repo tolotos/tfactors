@@ -27,7 +27,14 @@ class Cluster:
         self.members = tmp_objects
 
     def add_family(self):
-        self.family = self.members[0].family
+        '''Adds the family to the current clusters. The families from the
+        members are used. If all members of the cluster are also members of the
+        same family, the cluster is assigned the family of all members'''
+        families = []
+        for member in self.members:
+            families.append(member.family)
+        if len(set(families)) == 1:
+            self.family = families[0]
 
     def add_cluster_to_members(self):
             for protein in self.members:

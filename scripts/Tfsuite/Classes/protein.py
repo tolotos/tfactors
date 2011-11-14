@@ -41,6 +41,15 @@ class Protein:
             if self.gene_name in cluster.members:
                 self.cluster = cluster.name
 
+    def add_family(self, family):
+        '''USes the mapping file that was provided before and compares the
+        domain arrangements in the hmmout to the family mapping. If a hit is
+        found, the family is set, otherwise it stays "None".'''
+        self.collapse_domains()
+        domains =";".join(self.domains)
+        if domains in family.mapping:
+            self.family = family.mapping[domains]
+
     def add_species(self, species):
         if self.gene_name in species.specmap:
             self.species = species.specmap[self.gene_name]

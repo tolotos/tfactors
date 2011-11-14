@@ -1,18 +1,17 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 #
-#       correlate_cafe_count.py
+#       difference_cafe_count.py
 #
 #==============================================================================
 from optparse import OptionParser
 from Tfsuite.Parser.count import Count
 from Tfsuite.Parser.cafe import Cafe
 from Tfsuite.Classes.cluster import Cluster
-import rpy
-from ete2 import Tree
+from ete2a1 import *
 import copy
 import cPickle as pickle
-from rpy import r
+#from rpy import r
 #==============================================================================
 #Command line options==========================================================
 #==============================================================================
@@ -50,6 +49,14 @@ def add_num_to_nodes(tree):
         if node.is_leaf() == False:
             node.num = str(counter)
             counter += 1
+    return tree
+
+def add_diff_to_nodes(tree):
+    '''Adds the attribute "diff" to a tree. This is necessary to map the diff-
+    erences between count and cafe reconstruction to the family tree of all
+    clusters.Well, that makes sense now, what about tomorrow?'''
+    for node in tree.traverse("postorder"):
+        node.add_features(diff=0,total_count=0,total_cafe=0)
     return tree
 
 def add_cafe_and_count_to_nodes(tree):
@@ -90,7 +97,8 @@ def map_count_to_tree(clusters,count,tree):
        of the tree for each cluster (node.count).'''
     for cluster in clusters:
         counts = count.clusters[cluster.name]
-        #print name, counts
+        #The deepcopy operation is the bottleneck of the programm, but each
+        #cluster needs its own tree object!
         cluster.tree = copy.deepcopy(tree)
         for node in cluster.tree.traverse("postorder"):
             if node.is_leaf():
@@ -134,23 +142,70 @@ def load_clusters(clusters):
     clusters = map_cafe_to_tree(clusters,cafe,tree)
     return clusters
 
+def map_clusters_to_family(clusters, tree, families):
+    '''This function takes all clusters and maps the individual clusters to the
+    family tree. The tree must be provided as a ETE tree object and families
+    contains a list of strings, the family names, that sould be produced.'''
+    family_trees = {}
+    for family in families:
+        cur_tree = copy.deepcopy(tree)
+        cur_tree = add_diff_to_nodes(cur_tree)
+        for cluster in clusters:
+            if cluster.family == family:
+                for node in cluster.tree.traverse("postorder"):
+                    if not node.is_leaf():
+                        diff = abs(int(node.count) - int(node.cafe))
+                        cur_node = cur_tree&node.name # Find node by name
+                        cur_node.diff += diff
+                        cur_node.total_count += int(node.count)
+                        cur_node.total_cafe += int(node.cafe)
+        family_trees[family] = cur_tree
+    return family_trees
+
+def plot_tree(family_trees):
+    for i in family_trees:
+        tree = family_trees[i]
+        for node in tree.traverse():
+            diff = TextFace(str(node.diff),
+                            ftype='Verdana',
+                            fsize=14,
+                            fgcolor='#000000',
+                            bgcolor=None,
+                            penwidth=0,
+                            fstyle='bold')
+            tcount = TextFace(str(node.total_count),
+                            ftype='Verdana',
+                            fsize=10,
+                            fgcolor='#000000',
+                            bgcolor=None,
+                            penwidth=0,
+                            fstyle='italic')
+            tcafe = TextFace(str(node.total_cafe),
+                            ftype='Verdana',
+                            fsize=10,
+                            fgcolor='#000000',
+                            bgcolor=None,
+                            penwidth=0,
+                            fstyle='normal')
+            node.add_face(diff,column=0)
+            node.add_face(tcount,column=0)
+            node.add_face(tcafe,column=0)
+        ts = TreeStyle()
+        ts.show_leaf_name = True
+        ts.title.add_face(TextFace(i, fsize=20), column=0)
+        tree.render(i+".pdf",tree_style=ts)
+
 def main():
+    tree = Tree(options.tree, format=1)
     clusters = load_clusters(options.pickle)
-    cluster = clusters.clusters["ORTHOMCL422"]
-    cl_diff = []
-    cl_dist = []
-    print cluster.name
-    for node in cluster.tree.traverse("postorder"):
-        if not node.is_leaf():
-            diff = abs(int(node.count) - int(node.cafe))
-            dist = get_distance_to_root(node)
-            cl_diff.append(diff)
-            cl_dist.append(dist)
-    print cl_diff
-    print cl_dist
-    r.png("test.png", width=500, height=500)
-    r.plot(x=cl_dist, y=cl_diff, xlab="Distance", ylab="Difference")
-    r.dev_off()
+    family_trees = map_clusters_to_family(clusters,tree,["other",
+                                                         "HLH",
+                                                         "Homeobox",
+                                                         "bZIP",
+                                                         "zf-C2H2",
+                                                         "P53",
+                                                         "NuclearFactors"])
+    plot_tree(family_trees)
 
 if __name__ == '__main__':
     main()
