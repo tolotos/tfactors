@@ -16,20 +16,11 @@ import cPickle as pickle
 #==============================================================================
 usage = 'usage: %prog [options]'
 desc='''%prog takes orthomcl output (clusters) and produces an input
-        file for the tool cafe, which performes max-likelihood reconstruction
-        of ancestral states'''
+        file for the tool count, which reconstructs the ancestral states using
+        parsimony (dollo, or wagner)'''
 cloptions = OptionParser(usage = usage, description=desc)
-cloptions.add_option('-o', '--orthomcl', dest = 'clusters',
-    help = 'Orthomcl clusters', metavar='FILE',
-    default = '')
-cloptions.add_option('-f', '--fasta', dest = 'fasta',
-    help = 'Fasta file containing sequences of Proteins', metavar='FILE',
-    default = '')
 cloptions.add_option('-s', '--species', dest = 'species',
     help = 'Protein to species mapping', metavar='FILE',
-    default = '')
-cloptions.add_option('-d', '--hmmout', dest = 'hmmout',
-    help = 'Hmmout, containing domain annotated proteins', metavar='FILE',
     default = '')
 cloptions.add_option('-p', '--pickle', dest = 'pickle',
     help = 'Filename for the pickled clusters', metavar='FILE',

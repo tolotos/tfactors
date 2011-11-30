@@ -22,8 +22,6 @@ def connect_server(server_name):
     server = xmlrpclib.ServerProxy(server_name)
     return server
 
-
-
 def scale_nodesize(range,id):
     size = 50
     for i in range:
